@@ -8,27 +8,34 @@ addIntent(Intent.GUILDS)
 addIntent(Intent.GUILD_MESSAGES)
 /* End intent shit */
 
-const discordClient = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] })
+const discordClient = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]})
 
 discordClient.on('ready', () => {
   console.log(`Testing... Login is: ${discordClient.user.tag}`)
 })
 
-// discordClient.on('messageCreate', async message => {
-//   console.log("are we here?")
-//   await message.reply("pong")
-// })
+discordClient.on('messageCreate', async message => {
+  console.log("are we here?")
+
+  if (!message.content.startsWith('!') || message.author.bot) {
+    console.log('ignoring message...')
+    return;
+  }
+
+  console.log('replying...')
+  await message.reply("pong")
+})
 
 // discordClient.on('message', async (message) => {
 //   console.log("are we here?")
 //   await message.reply("pong")
 // })
 
-discordClient.on('interactionCreate', async interaction => {
-  console.log("what up")
-  if (interaction.commandName === 'ping') {
-    await interaction.reply('pong!')
-  }
-})
+// discordClient.on('interactionCreate', async interaction => {
+//   console.log("what up")
+//   if (interaction.commandName === 'ping') {
+//     await interaction.reply('pong!')
+//   }
+// })
 
 discordClient.login()
