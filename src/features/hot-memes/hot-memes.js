@@ -1,41 +1,43 @@
 import * as Axios from 'axios'
-import * as Cheerio from 'cheerio'
+import * as Scraper from './scraper.js'
 
-export async function getHotMeme () {
-  const html = await fetchTopMemesHtml()
-  const memes = parseTopMemes(html)
+export async function getHotMemeScraping () {
+  const memes = await scrapeHotMemes()
   const memeImageUrl = selectRandomMemeUrl(memes)
   const meme = await fetchMeme(memeImageUrl)
   return meme
 }
 
-async function fetchTopMemesHtml () {
+async function scrapeHotMemes () {
+  const html = (await fetchTopMemes('https://www.reddit.com/r/dankmemes')).data
+  const memes = Scraper.parseTopMemes(html)
+  return memes
+}
+
+export async function getHotMeme () {
+  return getHotRedditMeme()
+}
+
+async function getHotRedditMeme () {
+  const endpoint = 'https://www.reddit.com/r/dankmemes/top.json?limit=50'
+  const response = await fetchTopMemes(endpoint)
+
+  if (response.headers['Content-Type'].contains)
+}
+
+async function fetchTopMemes (url) {
   try {
-    const response = await Axios.default.get('https://www.reddit.com/r/dankmemes')
+    const response = await Axios.default.get(url)
 
     if (response.status !== 200) {
       throw new Error(`Error fetching dank memes from Reddit.\nStatus Code: ${response.status} - ${response.statusText}\nData: ${response.data}`)
     }
 
-    const html = response.data
-    return html
+    return response
   } catch (err) {
     console.log(err)
     throw err
   }
-}
-
-function parseTopMemes (html) {
-  const $ = Cheerio.load(html)
-  const memes = []
-
-  $('img.preview-img').each((i, elem) => {
-    const imageUrl = $(elem).attr('src')
-    if (imageUrl && imageUrl.includes('preview.redd.it')) {
-      memes.push(imageUrl)
-    }
-  })
-  return memes
 }
 
 function selectRandomMemeUrl (memes) {
