@@ -19,10 +19,12 @@ export async function getHotMeme () {
 }
 
 async function getHotRedditMeme () {
+  
+  
   const endpoint = 'https://www.reddit.com/r/dankmemes/top.json?limit=50'
   const response = await fetchTopMemes(endpoint)
 
-  if (response.headers['Content-Type'].contains)
+
 }
 
 async function fetchTopMemes (url) {

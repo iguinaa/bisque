@@ -1,11 +1,11 @@
 import Discord, { GatewayIntentBits, AttachmentBuilder } from 'discord.js'
 import 'dotenv/config'
 import * as MagicEightBall from './features/8ball.js'
-import * as Meme from './features/hot-memes.js'
+import * as Meme from './features/hot-memes/hot-memes.js'
 
 /* Remember to delete this intent shit, didn't realize it was baked into discord.js, could be good learning for max though. */
 // eslint-disable-next-line
-import { Intent, addIntent, getIntentNumber } from './discord/intents.js' // Intents = Collection of events to subscribe to
+import { Intent, addIntent, getIntentNumber } from './depends/discord/intents.js' // Intents = Collection of events to subscribe to
 
 addIntent(Intent.GUILDS)
 addIntent(Intent.GUILD_MESSAGES)
