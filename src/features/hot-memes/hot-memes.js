@@ -1,5 +1,8 @@
 import * as Axios from 'axios'
 import * as Scraper from './scraper.js'
+import * as RedditHelper from '../../depends/reddit/auth.js'
+
+let token = null
 
 export async function getHotMemeScraping () {
   const memes = await scrapeHotMemes()
@@ -19,23 +22,39 @@ export async function getHotMeme () {
 }
 
 async function getHotRedditMeme () {
-  
-  
-  const endpoint = 'https://www.reddit.com/r/dankmemes/top.json?limit=50'
-  const response = await fetchTopMemes(endpoint)
+  if (!token) {
+    token = await RedditHelper.fetchRedditToken()
+  }
 
+  if (token.expiration < Date.now()) {
+    // Need to update this to get a refresh token instead of reauthenticating to match best practice.
+    token = await RedditHelper.fetchRedditToken()
+  }
 
+  const endpoint = 'https://oauth.reddit.com/r/dankmemes/top.json?limit=50'
+  const memes = (await fetchTopMemes(endpoint, token.access_token)).data.children.map(child => child.data.url)
+  const memeImageUrl = selectRandomMemeUrl(memes)
+  const meme = await fetchMeme(memeImageUrl)
+  return meme
 }
 
-async function fetchTopMemes (url) {
+async function fetchTopMemes (url, token) {
   try {
-    const response = await Axios.default.get(url)
+    const response = await Axios.default.get(url, {
+      headers: {
+        'User-Agent': RedditHelper.userAgent,
+        'Content-Type': RedditHelper.contentType
+      },
+      auth: {
+        bearer: token
+      }
+    })
 
     if (response.status !== 200) {
       throw new Error(`Error fetching dank memes from Reddit.\nStatus Code: ${response.status} - ${response.statusText}\nData: ${response.data}`)
     }
 
-    return response
+    return response.data
   } catch (err) {
     console.log(err)
     throw err
