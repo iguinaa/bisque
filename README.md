@@ -31,10 +31,23 @@ A Discord bot with meme fetching, magic 8-ball, and voice channel greeting featu
    - Add Reddit API credentials (for memes)
 
 3. **Set up voice greeter** (optional):
+   
+   **Install FFmpeg** (required for audio processing):
    ```bash
-   ./setup-voice-greeter.sh
+   # macOS
+   brew install ffmpeg
+   
+   # Ubuntu/Debian  
+   sudo apt install ffmpeg
+   
+   # Windows - Download from https://ffmpeg.org/download.html
    ```
-   Or manually add a sound file to `assets/sounds/wow.mp3`
+   
+   **Add a sound file**:
+   - Find a "wow" sound effect (try freesound.org)
+   - Convert to MP3 format if needed (keep it 1-3 seconds, under 1MB)
+   - Save as: `assets/sounds/wow.mp3`
+   - **Important**: Ensure you have proper rights to use the sound file!
 
 4. **Start the bot**:
    ```bash
