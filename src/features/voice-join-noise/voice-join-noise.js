@@ -181,13 +181,12 @@ async function handleUserJoinedChannel(channel, member) {
     state.botJoined = true
     await joinBotToChannel(channel)
   }
-  // For any user after the first (if bot is in channel), potentially play sound
+  // For any user after the first (if bot is in channel), play sound
   else if (state.userCount >= 2 && state.botJoined) {
-    // Check if we should play sound based on config and user limits
-    const shouldPlaySound = config.playForEveryUser || state.userCount === 2
+    // Check if we're within the user limit (if configured)
     const withinUserLimit = config.maxUsersForSound === 0 || state.userCount <= config.maxUsersForSound
     
-    if (shouldPlaySound && withinUserLimit) {
+    if (withinUserLimit) {
       await playJoiningSoundWithDebounce(channel, member)
     }
   }

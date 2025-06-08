@@ -52,9 +52,6 @@ export const config = {
   // Delay before leaving empty channel (milliseconds)
   emptyChannelDelay: 0,
   
-  // Play sound for every new user (not just the second)
-  playForEveryUser: true,
-  
   // Debounce delay to prevent overlapping sounds (milliseconds)
   soundDebounceDelay: 1500,
   

@@ -2,7 +2,7 @@
 // Modify these settings to customize the voice join noise behavior
 //
 // Current behavior: 
-// - Plays sound for EVERY new user that joins a voice channel
+// - Plays sound for every new user that joins a voice channel (after the first)
 // - Uses debouncing to prevent overlapping sounds when multiple users join quickly
 // - Automatically unmutes the bot when joining voice channels
 
@@ -14,9 +14,6 @@ export const config = {
   // Delay before leaving an empty channel (in milliseconds)
   // Set to 0 for immediate leave, or higher value to prevent rapid join/leave cycles
   emptyChannelDelay: 0,
-  
-  // Whether to play sound for every new user or just the second user
-  playForEveryUser: true,
   
   // Debounce delay to prevent overlapping sounds (milliseconds)
   // If multiple users join within this timeframe, only one sound plays
