@@ -22,9 +22,8 @@ export const config = {
   // Volume level for joining sound (0.0 to 1.0, where 1.0 is full volume)
   soundVolume: 0.5,
   
-  // Maximum number of users before stopping sound playback
-  // Set to 0 for no limit
-  maxUsersForSound: 0,
+  // Enable/disable the voice join noise feature entirely
+  enabled: true,
   
   // Enable debug logging
   debugMode: true

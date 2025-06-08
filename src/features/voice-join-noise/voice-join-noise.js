@@ -10,25 +10,46 @@ const __dirname = dirname(__filename)
 // Get sound file path from config, with fallback to default
 const SOUND_FILE_PATH = join(process.cwd(), config.soundFilePath)
 
-// Track active voice connections and channel states
+// Track active voice connections and sound debounce timers
 const activeConnections = new Map()
-const channelStates = new Map()
-const soundCooldowns = new Map() // Track sound debounce timers
+const soundCooldowns = new Map()
 
 export function initializeVoiceJoinNoise(client) {
+  if (!config.enabled) {
+    console.log('Voice Join Noise is disabled in config')
+    return
+  }
+  
   client.on('voiceStateUpdate', handleVoiceStateUpdate)
   console.log('Voice Join Noise initialized!')
+  
+  // Periodic cleanup to prevent getting stuck in empty channels
+  setInterval(() => {
+    cleanupEmptyChannels()
+  }, 5 * 60 * 1000) // Every 5 minutes
 }
 
 export function getVoiceStatus() {
+  if (!config.enabled) {
+    return {
+      enabled: false,
+      activeConnections: 0,
+      activeCooldowns: 0
+    }
+  }
+  
   return {
+    enabled: true,
     activeConnections: activeConnections.size,
-    trackedChannels: channelStates.size,
     activeCooldowns: soundCooldowns.size
   }
 }
 
 export async function testSound(channel) {
+  if (!config.enabled) {
+    throw new Error('Voice Join Noise feature is disabled in configuration')
+  }
+  
   if (!channel) {
     throw new Error('No voice channel provided')
   }
@@ -45,53 +66,25 @@ export async function testSound(channel) {
     return
   }
   
-  // Count non-bot users in the channel
-  const humanUsers = channel.members.filter(member => !member.user.bot)
-  const shouldStayInChannel = humanUsers.size > 0
-  
-  if (config.debugMode) {
-    console.log(`Test: Found ${humanUsers.size} human users in channel ${channel.name}`)
-  }
-  
   // Temporarily join channel to test sound
   const connection = joinVoiceChannel({
     channelId: channel.id,
     guildId: channel.guild.id,
     adapterCreator: channel.guild.voiceAdapterCreator,
-    selfMute: false, // Unmute so bot can play sounds
-    selfDeaf: true,  // Keep deafened since we don't need voice input
+    selfMute: false,
+    selfDeaf: true,
   })
   
   try {
     await playJoiningSoundWithDebounce(channel, { displayName: 'Test User' })
     
-    if (shouldStayInChannel) {
-      // Users are present, add to our tracking and stay
+    // Count current human users in the channel
+    const humanUsers = channel.members.filter(member => !member.user.bot)
+    
+    if (humanUsers.size > 0) {
+      // Users are present, keep the connection active
       activeConnections.set(channel.id, connection)
-      
-      // Initialize channel state if it doesn't exist
-      if (!channelStates.has(channel.id)) {
-        channelStates.set(channel.id, {
-          userCount: humanUsers.size,
-          botJoined: true,
-          firstUser: humanUsers.first()?.id || null
-        })
-      }
-      
-      // Set up the same event handlers as joinBotToChannel
-      connection.on(VoiceConnectionStatus.Disconnected, () => {
-        if (config.debugMode) {
-          console.log(`Voice connection disconnected for channel: ${channel.name}`)
-        }
-        activeConnections.delete(channel.id)
-      })
-      
-      connection.on(VoiceConnectionStatus.Destroyed, () => {
-        if (config.debugMode) {
-          console.log(`Voice connection destroyed for channel: ${channel.name}`)
-        }
-        activeConnections.delete(channel.id)
-      })
+      setupConnectionEvents(connection, channel)
       
       if (config.debugMode) {
         console.log(`Test: Staying in channel ${channel.name} (${humanUsers.size} users present)`)
@@ -152,83 +145,68 @@ async function handleVoiceStateUpdate(oldState, newState) {
 }
 
 async function handleUserJoinedChannel(channel, member) {
-  const channelId = channel.id
-  const guildId = channel.guild.id
-  
   if (config.debugMode) {
     console.log(`User ${member.displayName} joined voice channel: ${channel.name}`)
   }
   
-  // Initialize channel state if it doesn't exist
-  if (!channelStates.has(channelId)) {
-    channelStates.set(channelId, {
-      userCount: 0,
-      botJoined: false,
-      firstUser: null
-    })
-  }
-  
-  const state = channelStates.get(channelId)
-  state.userCount++
+  // Count current human users in the channel (including the one who just joined)
+  const humanUsers = channel.members.filter(member => !member.user.bot)
+  const userCount = humanUsers.size
   
   if (config.debugMode) {
-    console.log(`Channel ${channel.name} now has ${state.userCount} users`)
+    console.log(`Channel ${channel.name} now has ${userCount} users`)
   }
   
-  // If this is the first user, bot should join and track them
-  if (state.userCount === 1) {
-    state.firstUser = member.id
-    state.botJoined = true
+  // If this is the first user, bot should join
+  if (userCount === 1) {
     await joinBotToChannel(channel)
   }
-  // For any user after the first (if bot is in channel), play sound
-  else if (state.userCount >= 2 && state.botJoined) {
-    // Check if we're within the user limit (if configured)
-    const withinUserLimit = config.maxUsersForSound === 0 || state.userCount <= config.maxUsersForSound
-    
-    if (withinUserLimit) {
-      await playJoiningSoundWithDebounce(channel, member)
-    }
+  // For any user after the first, play sound (if bot is connected)
+  else if (userCount >= 2 && activeConnections.has(channel.id)) {
+    await playJoiningSoundWithDebounce(channel, member)
   }
 }
 
 async function handleUserLeftChannel(channel, member) {
-  const channelId = channel.id
-  const state = channelStates.get(channelId)
-  
-  if (!state) return
-  
   if (config.debugMode) {
     console.log(`User ${member.displayName} left voice channel: ${channel.name}`)
   }
   
-  state.userCount--
+  // Check if we should leave the channel
+  await checkIfShouldLeaveChannel(channel)
+}
+
+async function checkIfShouldLeaveChannel(channel) {
+  // Only check if we're actually in this channel
+  if (!activeConnections.has(channel.id)) return
+  
+  // Count current human users in the channel
+  const humanUsers = channel.members.filter(member => !member.user.bot)
+  const userCount = humanUsers.size
   
   if (config.debugMode) {
-    console.log(`Channel ${channel.name} now has ${state.userCount} users`)
+    console.log(`Channel ${channel.name} now has ${userCount} users`)
   }
   
-  // If channel becomes empty, bot should leave
-  if (state.userCount === 0) {
+  // If channel is empty, leave
+  if (userCount === 0) {
     // Clear any pending sound cooldown
-    if (soundCooldowns.has(channelId)) {
-      clearTimeout(soundCooldowns.get(channelId))
-      soundCooldowns.delete(channelId)
+    if (soundCooldowns.has(channel.id)) {
+      clearTimeout(soundCooldowns.get(channel.id))
+      soundCooldowns.delete(channel.id)
     }
     
     if (config.emptyChannelDelay > 0) {
       // Wait before leaving to prevent rapid join/leave cycles
       setTimeout(async () => {
-        // Check if channel is still empty after delay
-        const currentState = channelStates.get(channelId)
-        if (currentState && currentState.userCount === 0) {
+        // Double-check if channel is still empty after delay
+        const currentUsers = channel.members.filter(member => !member.user.bot)
+        if (currentUsers.size === 0) {
           await leaveBotFromChannel(channel)
-          channelStates.delete(channelId)
         }
       }, config.emptyChannelDelay)
     } else {
       await leaveBotFromChannel(channel)
-      channelStates.delete(channelId)
     }
   }
 }
@@ -239,26 +217,12 @@ async function joinBotToChannel(channel) {
       channelId: channel.id,
       guildId: channel.guild.id,
       adapterCreator: channel.guild.voiceAdapterCreator,
-      selfMute: false, // Unmute so bot can play sounds
-      selfDeaf: true,  // Keep deafened since we don't need voice input
+      selfMute: false,
+      selfDeaf: true,
     })
     
     activeConnections.set(channel.id, connection)
-    
-    // Handle connection events
-    connection.on(VoiceConnectionStatus.Disconnected, () => {
-      if (config.debugMode) {
-        console.log(`Voice connection disconnected for channel: ${channel.name}`)
-      }
-      activeConnections.delete(channel.id)
-    })
-    
-    connection.on(VoiceConnectionStatus.Destroyed, () => {
-      if (config.debugMode) {
-        console.log(`Voice connection destroyed for channel: ${channel.name}`)
-      }
-      activeConnections.delete(channel.id)
-    })
+    setupConnectionEvents(connection, channel)
     
     console.log(`Bot joined voice channel: ${channel.name}`)
   } catch (error) {
@@ -266,20 +230,74 @@ async function joinBotToChannel(channel) {
   }
 }
 
+function setupConnectionEvents(connection, channel) {
+  connection.on(VoiceConnectionStatus.Disconnected, () => {
+    if (config.debugMode) {
+      console.log(`Voice connection disconnected for channel: ${channel.name}`)
+    }
+    activeConnections.delete(channel.id)
+  })
+  
+  connection.on(VoiceConnectionStatus.Destroyed, () => {
+    if (config.debugMode) {
+      console.log(`Voice connection destroyed for channel: ${channel.name}`)
+    }
+    activeConnections.delete(channel.id)
+  })
+}
+
 async function leaveBotFromChannel(channel) {
   const connection = activeConnections.get(channel.id)
   if (connection) {
     try {
-      // Check if connection is still valid before destroying
       if (connection.state.status !== VoiceConnectionStatus.Destroyed) {
         connection.destroy()
       }
     } catch (error) {
       console.warn(`Warning: Issue destroying voice connection for ${channel.name}:`, error.message)
     } finally {
-      // Always clean up our tracking regardless of destroy success
       activeConnections.delete(channel.id)
       console.log(`Bot left voice channel: ${channel.name}`)
+    }
+  }
+}
+
+// Periodic cleanup function to handle missed events
+async function cleanupEmptyChannels() {
+  if (config.debugMode) {
+    console.log(`Running periodic cleanup check for ${activeConnections.size} active connections`)
+  }
+  
+  for (const [channelId, connection] of activeConnections) {
+    try {
+      // Get the channel from the connection's guild
+      const guild = connection.joinConfig.guildId
+      const client = connection._state?.adapter?.client || connection.joinConfig.adapterCreator().client
+      
+      if (!client) continue
+      
+      const channel = await client.channels.fetch(channelId)
+      if (channel) {
+        await checkIfShouldLeaveChannel(channel)
+      } else {
+        // Channel no longer exists, clean up connection
+        if (config.debugMode) {
+          console.log(`Cleaning up connection for deleted channel: ${channelId}`)
+        }
+        connection.destroy()
+        activeConnections.delete(channelId)
+      }
+    } catch (error) {
+      if (config.debugMode) {
+        console.warn(`Cleanup error for channel ${channelId}:`, error.message)
+      }
+      // If we can't check the channel, just clean up the connection
+      try {
+        connection.destroy()
+      } catch (destroyError) {
+        // Ignore destroy errors during cleanup
+      }
+      activeConnections.delete(channelId)
     }
   }
 }

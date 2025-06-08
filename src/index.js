@@ -47,16 +47,26 @@ discordClient.on('messageCreate', async message => {
       try {
         const meme = await Meme.getHotMeme()
         const discordedMeme = new AttachmentBuilder(meme.imageData, { name: `meme.${meme.extension}` })
-        await message.channel.send({ files: [discordedMeme] })      } catch {
+        await message.channel.send({ files: [discordedMeme] })
+      } catch {
         await message.reply('Sorry, failed to fetch dank memes. Check error log for deetz.')
       }
       break
-    case '!voice':      if (command[1] === 'status') {
+    case '!voice':
+      if (command[1] === 'status') {
         const status = VoiceJoinNoise.getVoiceStatus()
-        await message.reply(`Voice Join Noise Status:\nActive connections: ${status.activeConnections}\nTracked channels: ${status.trackedChannels}\nActive cooldowns: ${status.activeCooldowns}`)
+        if (!status.enabled) {
+          await message.reply('Voice Join Noise feature is currently disabled in configuration.')
+        } else {
+          await message.reply(`Voice Join Noise Status:\nActive connections: ${status.activeConnections}\nActive cooldowns: ${status.activeCooldowns}`)
+        }
       } else if (command[1] === 'test' && message.member.voice.channel) {
-        await VoiceJoinNoise.testSound(message.member.voice.channel)
-        await message.reply('Testing voice join noise sound!')
+        try {
+          await VoiceJoinNoise.testSound(message.member.voice.channel)
+          await message.reply('Testing voice join noise sound!')
+        } catch (error) {
+          await message.reply(`Error: ${error.message}`)
+        }
       } else {
         await message.reply('Voice commands: `!voice status` - Check voice join noise status, `!voice test` - Test sound (must be in voice channel)')
       }
