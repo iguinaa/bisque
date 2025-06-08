@@ -2,7 +2,7 @@ import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerSt
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { config } from './voice-greeter-config.js'
+import { config } from './config.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -15,9 +15,9 @@ const activeConnections = new Map()
 const channelStates = new Map()
 const soundCooldowns = new Map() // Track sound debounce timers
 
-export function initializeVoiceGreeter(client) {
+export function initializeVoiceJoinNoise(client) {
   client.on('voiceStateUpdate', handleVoiceStateUpdate)
-  console.log('Voice Greeter initialized!')
+  console.log('Voice Join Noise initialized!')
 }
 
 export function getVoiceStatus() {
@@ -41,7 +41,7 @@ export async function testSound(channel) {
     if (config.debugMode) {
       console.log(`Playing test sound in existing connection for channel: ${channel.name}`)
     }
-    await playGreetingSoundWithDebounce(channel, { displayName: 'Test User' })
+    await playJoiningSoundWithDebounce(channel, { displayName: 'Test User' })
     return
   }
   
@@ -63,7 +63,7 @@ export async function testSound(channel) {
   })
   
   try {
-    await playGreetingSoundWithDebounce(channel, { displayName: 'Test User' })
+    await playJoiningSoundWithDebounce(channel, { displayName: 'Test User' })
     
     if (shouldStayInChannel) {
       // Users are present, add to our tracking and stay
@@ -188,7 +188,7 @@ async function handleUserJoinedChannel(channel, member) {
     const withinUserLimit = config.maxUsersForSound === 0 || state.userCount <= config.maxUsersForSound
     
     if (shouldPlaySound && withinUserLimit) {
-      await playGreetingSoundWithDebounce(channel, member)
+      await playJoiningSoundWithDebounce(channel, member)
     }
   }
 }
@@ -285,7 +285,7 @@ async function leaveBotFromChannel(channel) {
   }
 }
 
-async function playGreetingSound(channel, member) {
+async function playJoiningSound(channel, member) {
   const connection = activeConnections.get(channel.id)
   if (!connection) return
   
@@ -303,10 +303,10 @@ async function playGreetingSound(channel, member) {
     if (stats.size < 1000) { // Less than 1KB is likely not a real audio file
       console.warn(`⚠️  Sound file appears to be a placeholder (${stats.size} bytes)`)
       console.log('Please replace with a real audio file (MP3, WAV, or OGG)')
-      console.log('For now, simulating greeting sound...')
+      console.log('For now, simulating joining sound...')
       
       if (config.debugMode) {
-        console.log(`🎵 [SIMULATED] Playing greeting sound for ${member ? member.displayName : 'user'} in channel: ${channel.name}`)
+        console.log(`🎵 [SIMULATED] Playing joining sound for ${member ? member.displayName : 'user'} in channel: ${channel.name}`)
       }
       return
     }
@@ -325,7 +325,7 @@ async function playGreetingSound(channel, member) {
     connection.subscribe(player)
     
     if (config.debugMode) {
-      console.log(`🎵 Playing greeting sound for ${member ? member.displayName : 'user'} in channel: ${channel.name}`)
+      console.log(`🎵 Playing joining sound for ${member ? member.displayName : 'user'} in channel: ${channel.name}`)
     }
     
     // Clean up after playing
@@ -338,13 +338,13 @@ async function playGreetingSound(channel, member) {
     })
     
   } catch (error) {
-    console.error('Failed to play greeting sound:', error)
+    console.error('Failed to play joining sound:', error)
     console.log('Make sure you have a valid audio file at:', SOUND_FILE_PATH)
     console.log('FFmpeg must be installed for audio processing')
   }
 }
 
-async function playGreetingSoundWithDebounce(channel, member) {
+async function playJoiningSoundWithDebounce(channel, member) {
   const channelId = channel.id
   
   // Check if there's already a sound cooldown for this channel
@@ -356,7 +356,7 @@ async function playGreetingSoundWithDebounce(channel, member) {
   }
   
   // Play the sound immediately
-  await playGreetingSound(channel, member)
+  await playJoiningSound(channel, member)
   
   // Set cooldown to prevent overlapping sounds
   const cooldownTimer = setTimeout(() => {

@@ -1,5 +1,5 @@
-// Voice Greeter Configuration
-// Modify these settings to customize the voice greeter behavior
+// Voice Join Noise Configuration
+// Modify these settings to customize the voice join noise behavior
 //
 // Current behavior: 
 // - Plays sound for EVERY new user that joins a voice channel
@@ -22,7 +22,7 @@ export const config = {
   // If multiple users join within this timeframe, only one sound plays
   soundDebounceDelay: 4000,
   
-  // Volume level for greeting sound (0.0 to 1.0, where 1.0 is full volume)
+  // Volume level for joining sound (0.0 to 1.0, where 1.0 is full volume)
   soundVolume: 0.5,
   
   // Maximum number of users before stopping sound playback

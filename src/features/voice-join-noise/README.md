@@ -1,10 +1,10 @@
-# Voice Greeter Feature
+# Voice Join Noise Feature
 
-The Voice Greeter automatically joins voice channels and plays a greeting sound when users enter.
+The Voice Join Noise feature automatically joins voice channels and plays a sound when users enter.
 
 ## Dependencies
 
-The voice greeter requires these packages to be installed:
+The voice join noise feature requires these packages to be installed:
 
 ```bash
 npm install @discordjs/voice @discordjs/opus
@@ -37,12 +37,12 @@ sudo apt install ffmpeg
 
 1. **Auto-join**: When the first user joins any voice channel, the bot automatically joins that channel
 2. **Auto-unmute**: The bot automatically unmutes itself when joining (no manual unmuting required!)
-3. **Sound trigger**: When a second user (or more, if configured) joins the channel, the bot plays a greeting sound
+2. **Sound trigger**: When a second user (or more, if configured) joins the channel, the bot plays a joining sound
 4. **Auto-leave**: When the voice channel becomes empty, the bot leaves automatically
 
 ## Configuration
 
-Edit `src/features/voice-greeter-config.js` to customize behavior:
+Edit `src/features/voice-join-noise/config.js` to customize behavior:
 
 ```javascript
 export const config = {
@@ -58,7 +58,7 @@ export const config = {
   // Debounce delay to prevent overlapping sounds (milliseconds)
   soundDebounceDelay: 1500,
   
-  // Volume level for greeting sound (0.0 to 1.0, where 1.0 is full volume)
+  // Volume level for joining sound (0.0 to 1.0, where 1.0 is full volume)
   soundVolume: 0.5,
   
   // Maximum users before stopping sound playback (0 = no limit)
@@ -72,7 +72,7 @@ export const config = {
 ## Commands
 
 - `!voice status` - Check how many channels the bot is monitoring
-- `!voice test` - Test the greeting sound (you must be in a voice channel)
+- `!voice test` - Test the joining sound (you must be in a voice channel)
 
 ## Sound File Requirements
 
@@ -100,14 +100,14 @@ export const config = {
 
 ## Debounce Feature
 
-The voice greeter now includes smart debouncing to prevent overlapping sounds:
+The voice join noise feature now includes smart debouncing to prevent overlapping sounds:
 
 - **Multiple rapid joins**: If several users join within `soundDebounceDelay` milliseconds, only one sound plays
 - **Cooldown tracking**: Each channel has its own cooldown timer
 - **Debug visibility**: Use `!voice status` to see active cooldowns
 - **Configurable timing**: Adjust `soundDebounceDelay` in the config (default: 1500ms)
 
-This prevents audio chaos when multiple people join a voice channel simultaneously while still greeting every new user individually when they join at different times.
+This prevents audio chaos when multiple people join a voice channel simultaneously while still playing the join sound for every new user individually when they join at different times.
 
 ## Example Setup
 

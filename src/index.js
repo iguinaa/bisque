@@ -2,7 +2,7 @@ import Discord, { GatewayIntentBits, AttachmentBuilder } from 'discord.js'
 import 'dotenv/config'
 import * as MagicEightBall from './features/8ball.js'
 import * as Meme from './features/hot-memes/hot-memes.js'
-import * as VoiceGreeter from './features/voice-greeter.js'
+import * as VoiceJoinNoise from './features/voice-join-noise/voice-join-noise.js'
 
 /* Remember to delete this intent shit, didn't realize it was baked into discord.js, could be good learning for max though. */
 // eslint-disable-next-line
@@ -21,11 +21,10 @@ const discordClient = new Discord.Client({
   ] 
 })
 
-discordClient.on('ready', () => {
-  console.log(`Testing... Login is: ${discordClient.user.tag}`)
+discordClient.on('ready', () => {  console.log(`Testing... Login is: ${discordClient.user.tag}`)
   
-  // Initialize voice greeter feature
-  VoiceGreeter.initializeVoiceGreeter(discordClient)
+  // Initialize voice join noise feature
+  VoiceJoinNoise.initializeVoiceJoinNoise(discordClient)
 })
 
 discordClient.on('messageCreate', async message => {
@@ -52,15 +51,14 @@ discordClient.on('messageCreate', async message => {
         await message.reply('Sorry, failed to fetch dank memes. Check error log for deetz.')
       }
       break
-    case '!voice':
-      if (command[1] === 'status') {
-        const status = VoiceGreeter.getVoiceStatus()
-        await message.reply(`Voice Greeter Status:\nActive connections: ${status.activeConnections}\nTracked channels: ${status.trackedChannels}\nActive cooldowns: ${status.activeCooldowns}`)
+    case '!voice':      if (command[1] === 'status') {
+        const status = VoiceJoinNoise.getVoiceStatus()
+        await message.reply(`Voice Join Noise Status:\nActive connections: ${status.activeConnections}\nTracked channels: ${status.trackedChannels}\nActive cooldowns: ${status.activeCooldowns}`)
       } else if (command[1] === 'test' && message.member.voice.channel) {
-        await VoiceGreeter.testSound(message.member.voice.channel)
-        await message.reply('Testing voice greeter sound!')
+        await VoiceJoinNoise.testSound(message.member.voice.channel)
+        await message.reply('Testing voice join noise sound!')
       } else {
-        await message.reply('Voice commands: `!voice status` - Check voice greeter status, `!voice test` - Test sound (must be in voice channel)')
+        await message.reply('Voice commands: `!voice status` - Check voice join noise status, `!voice test` - Test sound (must be in voice channel)')
       }
       break
   }

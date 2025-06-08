@@ -1,6 +1,6 @@
 # Bisque Discord Bot
 
-A Discord bot with meme fetching, magic 8-ball, and voice channel greeting features.
+A Discord bot with meme fetching, magic 8-ball, and voice join noise features.
 
 ## Features
 
@@ -10,13 +10,13 @@ A Discord bot with meme fetching, magic 8-ball, and voice channel greeting featu
 ### 🔥 Hot Memes
 - `!meme` - Fetch a random hot meme from Reddit
 
-### 🎵 Voice Greeter (NEW!)
+### 🎵 Voice Join Noise (NEW!)
 - Automatically joins voice channels when users enter
 - Plays a customizable sound for every new user that joins
 - Smart debouncing prevents overlapping sounds when multiple users join quickly
 - Leaves when the channel becomes empty
-- `!voice status` - Check voice greeter status
-- `!voice test` - Test the greeting sound
+- `!voice status` - Check voice join noise status
+- `!voice test` - Test the joining sound
 
 ## Setup
 
@@ -30,7 +30,7 @@ A Discord bot with meme fetching, magic 8-ball, and voice channel greeting featu
    - Add your Discord bot token
    - Add Reddit API credentials (for memes)
 
-3. **Set up voice greeter** (optional):
+3. **Set up voice join noise** (optional):
    
    **Install FFmpeg** (required for audio processing):
    ```bash
@@ -64,13 +64,13 @@ A Discord bot with meme fetching, magic 8-ball, and voice channel greeting featu
 
 ## Configuration
 
-### Voice Greeter
-Edit `src/features/voice-greeter-config.js` to customize:
+### Voice Join Noise
+Edit `src/features/voice-join-noise/config.js` to customize:
 - Sound file path
 - Playback behavior
 - Debug settings
 
-See `src/features/voice-greeter-README.md` for detailed documentation.
+See `src/features/voice-join-noise/README.md` for detailed documentation.
 
 ## Commands
 
@@ -79,8 +79,8 @@ See `src/features/voice-greeter-README.md` for detailed documentation.
 | `!ping` | Simple ping/pong test |
 | `!magic8` | Magic 8-ball response |
 | `!meme` | Random hot meme from Reddit |
-| `!voice status` | Voice greeter status |
-| `!voice test` | Test voice greeting sound |
+| `!voice status` | Voice join noise status |
+| `!voice test` | Test voice joining sound |
 
 ## Development
 
