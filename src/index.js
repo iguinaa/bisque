@@ -2,6 +2,7 @@ import Discord, { GatewayIntentBits, AttachmentBuilder } from 'discord.js'
 import 'dotenv/config'
 import * as MagicEightBall from './features/8ball.js'
 import * as Meme from './features/hot-memes/hot-memes.js'
+import * as VoiceJoinNoise from './features/voice-join-noise/voice-join-noise.js'
 
 /* Remember to delete this intent shit, didn't realize it was baked into discord.js, could be good learning for max though. */
 // eslint-disable-next-line
@@ -11,10 +12,19 @@ addIntent(Intent.GUILDS)
 addIntent(Intent.GUILD_MESSAGES)
 /* End intent shit */
 
-const discordClient = new Discord.Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] })
+const discordClient = new Discord.Client({ 
+  intents: [
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildVoiceStates
+  ] 
+})
 
-discordClient.on('ready', () => {
-  console.log(`Testing... Login is: ${discordClient.user.tag}`)
+discordClient.on('ready', () => {  console.log(`Testing... Login is: ${discordClient.user.tag}`)
+  
+  // Initialize voice join noise feature
+  VoiceJoinNoise.initializeVoiceJoinNoise(discordClient)
 })
 
 discordClient.on('messageCreate', async message => {
@@ -22,7 +32,6 @@ discordClient.on('messageCreate', async message => {
     console.log('ignoring message...')
     return
   }
-
   const command = message.content.split(' ')
 
   let response = ''
@@ -41,6 +50,25 @@ discordClient.on('messageCreate', async message => {
         await message.channel.send({ files: [discordedMeme] })
       } catch {
         await message.reply('Sorry, failed to fetch dank memes. Check error log for deetz.')
+      }
+      break
+    case '!voice':
+      if (command[1] === 'status') {
+        const status = VoiceJoinNoise.getVoiceStatus()
+        if (!status.enabled) {
+          await message.reply('Voice Join Noise feature is currently disabled in configuration.')
+        } else {
+          await message.reply(`Voice Join Noise Status:\nActive connections: ${status.activeConnections}\nActive cooldowns: ${status.activeCooldowns}`)
+        }
+      } else if (command[1] === 'test' && message.member.voice.channel) {
+        try {
+          await VoiceJoinNoise.testSound(message.member.voice.channel)
+          await message.reply('Testing voice join noise sound!')
+        } catch (error) {
+          await message.reply(`Error: ${error.message}`)
+        }
+      } else {
+        await message.reply('Voice commands: `!voice status` - Check voice join noise status, `!voice test` - Test sound (must be in voice channel)')
       }
       break
   }
