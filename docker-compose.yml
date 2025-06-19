@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  bisque-bot:
+    # This would build the docker image from the Dockerfile in the current directory. 
+    # Good for development, but this is for learning and I want to keep clear separation between building and running.
+    # build: .
+    image: bisque-bot:latest
+    container_name: bisque-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./assets:/app/assets:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'  # Limit to 50% of a single CPU core
+          memory: 192M
