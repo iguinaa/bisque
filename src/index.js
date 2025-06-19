@@ -1,10 +1,12 @@
 import Discord, { GatewayIntentBits, AttachmentBuilder } from 'discord.js'
+
+// dotenv works locally, but is redundant in the container since the environment variables are already set in docker-compose
 import 'dotenv/config'
 import * as MagicEightBall from './features/8ball.js'
 import * as Meme from './features/hot-memes/hot-memes.js'
 import * as VoiceJoinNoise from './features/voice-join-noise/voice-join-noise.js'
 
-/* Remember to delete this intent shit, didn't realize it was baked into discord.js, could be good learning for max though. */
+/* No longer need this manual intent stuff, didn't realize it was baked into discord.js, could be good learning for max though. */
 // eslint-disable-next-line
 import { Intent, addIntent, getIntentNumber } from './depends/discord/intents.js' // Intents = Collection of events to subscribe to
 
