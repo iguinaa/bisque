@@ -1,5 +1,8 @@
 FROM node:22-alpine
 
+# Install FFmpeg for audio processing
+RUN apk add --no-cache ffmpeg
+
 # Set the working directory inside the container
 WORKDIR /app
 
