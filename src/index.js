@@ -14,17 +14,18 @@ addIntent(Intent.GUILDS)
 addIntent(Intent.GUILD_MESSAGES)
 /* End intent shit */
 
-const discordClient = new Discord.Client({ 
+const discordClient = new Discord.Client({
   intents: [
-    GatewayIntentBits.Guilds, 
-    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates
-  ] 
+  ]
 })
 
-discordClient.on('ready', () => {  console.log(`Testing... Login is: ${discordClient.user.tag}`)
-  
+discordClient.on('ready', () => {
+  console.log(`Testing... Login is: ${discordClient.user.tag}`)
+
   // Initialize voice join noise feature
   VoiceJoinNoise.initializeVoiceJoinNoise(discordClient)
 })
