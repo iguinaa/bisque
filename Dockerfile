@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:24-alpine
 
 # Install FFmpeg for audio processing
 RUN apk add --no-cache ffmpeg
@@ -11,7 +11,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Clean install of only production dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy application source code
 COPY src/ ./src/

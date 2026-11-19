@@ -26,7 +26,7 @@ A Discord bot with meme fetching, magic 8-ball, and voice join noise features.
    ```
 
 2. **Configure environment**:
-   - Copy `.env.example` to `.env`
+   - Copy `.env.sample` to `.env`
    - Add your Discord bot token
    - Add Reddit API credentials (for memes)
 
